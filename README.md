@@ -8,5 +8,5 @@ AI suggestions for content improvements
 Grade-based adjustments to personalize each document
 Technologies Used
 Frontend: React.js
-Backend: Node
+Backend: NodeJS
 Database: MongoDB
