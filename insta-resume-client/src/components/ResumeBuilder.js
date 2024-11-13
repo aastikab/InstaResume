@@ -76,11 +76,12 @@ const ResumeBuilder = () => {
       } else {
         // Final submission
         const response = await api.post('/resumes', updatedFormData);
+        console.log('I am in the Frontend');
         setMessages(prev => [...prev, { 
           type: 'bot', 
           text: "Great! I've created your resume. Would you like to view it or make any changes?" 
         }]);
-        navigate(`/resume/${response.data._id}`);
+        // navigate(`/resume/${response.data._id}`);
       }
     } catch (error) {
       console.error('Error:', error);

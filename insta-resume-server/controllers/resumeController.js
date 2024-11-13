@@ -1,12 +1,22 @@
 const Resume = require('../models/Resume');
 
+// const createResume = async (req, res) => {
+//   try {
+//     const resume = await Resume.create({
+//       ...req.body,
+//       user: req.user._id
+//     });
+//     res.status(201).json(resume);
+//   } catch (error) {
+//     console.error('Create resume error:', error);
+//     res.status(500).json({ message: 'Error creating resume' });
+//   }
+// };
+
 const createResume = async (req, res) => {
   try {
-    const resume = await Resume.create({
-      ...req.body,
-      user: req.user._id
-    });
-    res.status(201).json(resume);
+    console.log('I am in the backend');
+    res.status(200).json({ message: 'Resume created successfully' });
   } catch (error) {
     console.error('Create resume error:', error);
     res.status(500).json({ message: 'Error creating resume' });
