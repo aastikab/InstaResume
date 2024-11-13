@@ -11,6 +11,8 @@ const {
 
 router.use(protect); // Protect all resume routes
 
+router.post('/resumes', createResume);
+
 router.route('/')
   .get(getResumes)
   .post(createResume);
