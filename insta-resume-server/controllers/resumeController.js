@@ -1,5 +1,5 @@
 const { OpenAI } = require('openai');
-const { Document, Packer, Paragraph, TextRun } = require("docx");
+const { Document, Packer, Paragraph, TextRun, AlignmentType } = require("docx");
 const fs = require("fs");
 const path = require("path");
 
@@ -19,37 +19,54 @@ const createResume = async (req, res) => {
       return res.status(401).json({ message: 'User not authenticated' });
     }
 
-    const prompt = `
-      Create a professional resume using template ${templateId} with the following information:
+    // Template-specific prompts
+    const getPrompt = (templateId) => {
+      const basePrompt = `
+        Personal Information:
+        Name: ${personalInfo.name}
+        Email: ${personalInfo.email}
+        Phone: ${personalInfo.phone}
+        Address: ${personalInfo.address}
+        
+        Professional Summary:
+        ${personalInfo.summary}
 
-      Personal Information:
-      Name: ${personalInfo.name}
-      Email: ${personalInfo.email}
-      Phone: ${personalInfo.phone}
-      Address: ${personalInfo.address}
-      
-      Professional Summary:
-      ${personalInfo.summary}
+        Work Experience:
+        ${experience.join('\n')}
 
-      Work Experience:
-      ${experience.join('\n')}
+        Education:
+        ${education.join('\n')}
 
-      Education:
-      ${education.join('\n')}
+        Technical Skills:
+        ${skills.join(', ')}
+      `;
 
-      Technical Skills:
-      ${skills.join(', ')}
+      switch(templateId) {
+        case '1':
+          return `Create a professional, corporate-style resume with the following information:
+            ${basePrompt}
+            Format this as a traditional business resume with:
+            1. Clear section headers in a professional font
+            2. Emphasis on business achievements and metrics
+            3. Traditional formatting suitable for corporate environments
+            4. Professional language and tone throughout`;
+        
+        case '2':
+          return `Create a creative, modern resume with the following information:
+            ${basePrompt}
+            Format this as a creative resume with:
+            1. Modern, eye-catching section headers
+            2. Emphasis on creative achievements and innovative solutions
+            3. Dynamic formatting that stands out
+            4. Engaging language that shows personality while maintaining professionalism`;
+        
+        default:
+          return `Create a standard resume with the following information:
+            ${basePrompt}`;
+      }
+    };
 
-      Please format this as a professional resume with the following requirements:
-      1. Create a compelling professional summary that highlights key strengths
-      2. Format work experience with bullet points highlighting achievements and responsibilities
-      3. Use action verbs to begin experience bullet points
-      4. Organize skills into relevant categories
-      5. Use consistent formatting throughout
-      6. Keep the language concise and impactful
-      7. Include dates in a consistent format
-      8. Separate sections clearly
-    `;
+    const prompt = getPrompt(templateId);
 
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -67,7 +84,39 @@ const createResume = async (req, res) => {
     const generatedResume = response.choices[0].message?.content?.trim() || "No response content";
     const sections = generatedResume.split('###').map(section => section.trim());
 
-    // Create a more professional document
+    // Template-specific document styling
+    const getDocumentStyle = (templateId) => {
+      switch(templateId) {
+        case '1':
+          return {
+            headerSize: 32,
+            subHeaderSize: 28,
+            textSize: 24,
+            headerColor: '000000',
+            accentColor: '2563eb'
+          };
+        case '2':
+          return {
+            headerSize: 36,
+            subHeaderSize: 30,
+            textSize: 24,
+            headerColor: '4F46E5',
+            accentColor: '6366F1'
+          };
+        default:
+          return {
+            headerSize: 32,
+            subHeaderSize: 28,
+            textSize: 24,
+            headerColor: '000000',
+            accentColor: '2563eb'
+          };
+      }
+    };
+
+    const style = getDocumentStyle(templateId);
+
+    // Update document creation with template-specific styling
     const doc = new Document({
       creator: "InstaResume",
       title: `${personalInfo.name} - Resume`,
@@ -75,44 +124,142 @@ const createResume = async (req, res) => {
       sections: [{
         properties: {},
         children: [
-          // Header with name
+          // Name at the top, centered
           new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 200 },
             children: [
               new TextRun({
                 text: personalInfo.name,
                 bold: true,
-                size: 32,
+                size: style.headerSize,
+                color: style.headerColor
               }),
             ],
+          }),
+
+          // Contact information, centered
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
             spacing: {
               after: 200,
             },
-          }),
-          // Contact information
-          new Paragraph({
             children: [
               new TextRun({
-                text: `${personalInfo.email} | ${personalInfo.phone} | ${personalInfo.address}`,
-                size: 20,
+                text: personalInfo.phone,
+                size: style.textSize,
+                color: style.headerColor
+              }),
+              new TextRun({
+                text: " | ",
+                size: style.textSize,
+                color: style.headerColor
+              }),
+              new TextRun({
+                text: personalInfo.email,
+                size: style.textSize,
+                color: style.headerColor
               }),
             ],
+          }),
+
+          // Address, centered
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
             spacing: {
               after: 400,
             },
+            children: [
+              new TextRun({
+                text: personalInfo.address,
+                size: style.textSize,
+                color: style.headerColor
+              }),
+            ],
           }),
-          // Main content
-          ...sections.map(section => 
+
+          // Education Section Header
+          new Paragraph({
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 400, after: 200 },
+            children: [
+              new TextRun({
+                text: "EDUCATION",
+                bold: true,
+                size: style.subHeaderSize,
+                color: style.headerColor
+              }),
+            ],
+          }),
+
+          // Education content
+          ...education.map(edu => 
             new Paragraph({
+              alignment: AlignmentType.LEFT,
+              spacing: { before: 100, after: 100 },
               children: [
                 new TextRun({
-                  text: section,
-                  size: 24,
+                  text: edu,
+                  size: style.textSize,
+                  color: style.headerColor
                 }),
               ],
-              spacing: {
-                before: 200,
-                after: 200,
-              },
+            })
+          ),
+
+          // Skills Section Header
+          new Paragraph({
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 400, after: 200 },
+            children: [
+              new TextRun({
+                text: "SKILLS",
+                bold: true,
+                size: style.subHeaderSize,
+                color: style.headerColor
+              }),
+            ],
+          }),
+
+          // Skills content
+          new Paragraph({
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 100, after: 100 },
+            children: [
+              new TextRun({
+                text: skills.join(", "),
+                size: style.textSize,
+                color: style.headerColor
+              }),
+            ],
+          }),
+
+          // Experience Section Header
+          new Paragraph({
+            alignment: AlignmentType.LEFT,
+            spacing: { before: 400, after: 200 },
+            children: [
+              new TextRun({
+                text: "EXPERIENCE",
+                bold: true,
+                size: style.subHeaderSize,
+                color: style.headerColor
+              }),
+            ],
+          }),
+
+          // Experience content
+          ...experience.map(exp => 
+            new Paragraph({
+              alignment: AlignmentType.LEFT,
+              spacing: { before: 100, after: 100 },
+              children: [
+                new TextRun({
+                  text: exp,
+                  size: style.textSize,
+                  color: style.headerColor
+                }),
+              ],
             })
           ),
         ],

@@ -7,7 +7,10 @@ const ResumeBuilder = () => {
   const { templateId } = useParams();
   const [currentStep, setCurrentStep] = useState(0);
   const [messages, setMessages] = useState([
-    { type: 'bot', text: "Hi! I'll help you create your resume. Let's start with your personal information. What's your full name?" }
+    { 
+      type: 'bot', 
+      text: getWelcomeMessage(templateId)
+    }
   ]);
   const [input, setInput] = useState('');
   const [formData, setFormData] = useState({
@@ -25,16 +28,48 @@ const ResumeBuilder = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  const steps = [
-    { field: 'name', question: "What's your full name?" },
-    { field: 'email', question: "What's your email address?" },
-    { field: 'phone', question: "What's your phone number?" },
-    { field: 'address', question: "What's your address?" },
-    { field: 'summary', question: "Write a brief professional summary about yourself." },
-    { field: 'experience', question: "Tell me about your work experience. Include company, position, dates, and key responsibilities." },
-    { field: 'education', question: "What's your educational background? Include school, degree, and graduation year." },
-    { field: 'skills', question: "List your key skills (separate with commas)." }
-  ];
+  function getWelcomeMessage(templateId) {
+    switch(templateId) {
+      case '1':
+        return "Hi! Let's create a professional resume that highlights your corporate experience. What's your full name?";
+      case '2':
+        return "Welcome! Let's build a creative resume that showcases your unique talents. What's your full name?";
+      default:
+        return "Hi! I'll help you create your resume. What's your full name?";
+    }
+  }
+
+  const getSteps = () => {
+    const baseSteps = [
+      { field: 'name', question: "What's your full name?" },
+      { field: 'email', question: "What's your email address?" },
+      { field: 'phone', question: "What's your phone number?" },
+      { field: 'address', question: "What's your address?" }
+    ];
+
+    switch(templateId) {
+      case '1': // Professional Template
+        return [
+          ...baseSteps,
+          { field: 'summary', question: "Write a professional summary focusing on your corporate achievements and expertise." },
+          { field: 'experience', question: "Detail your work experience with emphasis on quantifiable achievements and leadership roles." },
+          { field: 'education', question: "List your educational background, including relevant certifications and professional development." },
+          { field: 'skills', question: "List your technical and professional skills (separate with commas)." }
+        ];
+      case '2': // Creative Template
+        return [
+          ...baseSteps,
+          { field: 'summary', question: "Write a creative summary that showcases your unique approach and personality." },
+          { field: 'experience', question: "Share your experience with focus on creative projects and innovative solutions." },
+          { field: 'education', question: "List your education and any creative workshops or specialized training." },
+          { field: 'skills', question: "List your creative and technical skills (separate with commas)." }
+        ];
+      default:
+        return baseSteps;
+    }
+  };
+
+  const steps = getSteps();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,7 +102,10 @@ const ResumeBuilder = () => {
         setCurrentStep(prev => prev + 1);
       } else {
         try {
-          const response = await api.post('/resumes', updatedFormData, {
+          const response = await api.post('/resumes', {
+            ...updatedFormData,
+            templateId
+          }, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -77,7 +115,7 @@ const ResumeBuilder = () => {
           if (response.data.resumeId) {
             setMessages(prev => [...prev, { 
               type: 'bot', 
-              text: "Great! I've created your resume. Redirecting to view it..." 
+              text: "Great! I've created your resume using the selected template. Redirecting to view it..." 
             }]);
             setTimeout(() => navigate(`/resume/${response.data.resumeId}`), 2000);
           }

@@ -7,6 +7,8 @@ import Login from './components/Login';
 import TemplateSelection from './components/TemplateSelection';
 import CoverLetterBuilder from './components/CoverLetterBuilder';
 import ResumeView from './components/ResumeView';
+import { motion, AnimatePresence } from 'framer-motion';
+import styled from 'styled-components';
 
 // Define Home component separately
 const Home = () => {
@@ -91,39 +93,48 @@ const App = () => {
           </nav>
         </header>
 
-        <main className="container mx-auto py-8 px-4">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route 
-              path="/login" 
-              element={!isAuthenticated ? <Login setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/templates" />} 
-            />
-            <Route 
-              path="/signup" 
-              element={!isAuthenticated ? <AuthForm setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/templates" />} 
-            />
-            <Route
-              path="/templates"
-              element={isAuthenticated ? <TemplateSelection /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/builder/:templateId"
-              element={isAuthenticated ? <ResumeBuilder /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/cover-letter-builder/:templateId"
-              element={isAuthenticated ? <CoverLetterBuilder /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/history"
-              element={isAuthenticated ? <HistoryPage /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/resume/:id"
-              element={isAuthenticated ? <ResumeView /> : <Navigate to="/login" />}
-            />
-          </Routes>
-        </main>
+        <AnimatePresence mode='wait'>
+          <MainContent
+            as={motion.main}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="container mx-auto py-8 px-4"
+          >
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route 
+                path="/login" 
+                element={!isAuthenticated ? <Login setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/templates" />} 
+              />
+              <Route 
+                path="/signup" 
+                element={!isAuthenticated ? <AuthForm setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/templates" />} 
+              />
+              <Route
+                path="/templates"
+                element={isAuthenticated ? <TemplateSelection /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/builder/:templateId"
+                element={isAuthenticated ? <ResumeBuilder /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/cover-letter-builder/:templateId"
+                element={isAuthenticated ? <CoverLetterBuilder /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/history"
+                element={isAuthenticated ? <HistoryPage /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/resume/:id"
+                element={isAuthenticated ? <ResumeView /> : <Navigate to="/login" />}
+              />
+            </Routes>
+          </MainContent>
+        </AnimatePresence>
 
         <footer className="bg-gray-800 text-white py-4">
           <div className="container mx-auto text-center">
@@ -134,5 +145,10 @@ const App = () => {
     </Router>
   );
 };
+
+const MainContent = styled.main`
+  min-height: calc(100vh - 64px - 56px); // Adjust based on your header and footer heights
+  background: linear-gradient(135deg, #f6f7ff 0%, #ffffff 100%);
+`;
 
 export default App;
