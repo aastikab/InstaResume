@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import api from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const ResumeBuilder = () => {
+  const navigate = useNavigate();
+  const { templateId } = useParams();
   const [currentStep, setCurrentStep] = useState(0);
   const [messages, setMessages] = useState([
     { type: 'bot', text: "Hi! I'll help you create your resume. Let's start with your personal information. What's your full name?" }
@@ -18,10 +20,10 @@ const ResumeBuilder = () => {
     },
     experience: [],
     education: [],
-    skills: []
+    skills: [],
+    templateId: templateId
   });
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const steps = [
     { field: 'name', question: "What's your full name?" },
@@ -44,44 +46,48 @@ const ResumeBuilder = () => {
     setLoading(true);
 
     try {
-      // Process the input based on current step
       const step = steps[currentStep];
       let updatedFormData = { ...formData };
 
       if (currentStep < 5) {
-        // Personal Info
         updatedFormData.personalInfo[step.field] = input;
       } else if (currentStep === 5) {
-        // Experience
-        updatedFormData.experience.push({
-          description: input
-        });
+        updatedFormData.experience.push(input);
       } else if (currentStep === 6) {
-        // Education
-        updatedFormData.education.push({
-          description: input
-        });
+        updatedFormData.education.push(input);
       } else if (currentStep === 7) {
-        // Skills
         updatedFormData.skills = input.split(',').map(skill => skill.trim());
       }
 
       setFormData(updatedFormData);
 
-      // Move to next step or finish
       if (currentStep < steps.length - 1) {
         const nextQuestion = { type: 'bot', text: steps[currentStep + 1].question };
         setMessages(prev => [...prev, nextQuestion]);
         setCurrentStep(prev => prev + 1);
       } else {
-        // Final submission
-        const response = await api.post('/resumes', updatedFormData);
-        console.log('I am in the Frontend');
-        setMessages(prev => [...prev, { 
-          type: 'bot', 
-          text: "Great! I've created your resume. Would you like to view it or make any changes?" 
-        }]);
-        // navigate(`/resume/${response.data._id}`);
+        try {
+          const response = await api.post('/resumes', updatedFormData, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          if (response.data.resumeId) {
+            setMessages(prev => [...prev, { 
+              type: 'bot', 
+              text: "Great! I've created your resume. Redirecting to view it..." 
+            }]);
+            setTimeout(() => navigate(`/resume/${response.data.resumeId}`), 2000);
+          }
+        } catch (error) {
+          console.error('API Error:', error.response?.data || error.message);
+          setMessages(prev => [...prev, { 
+            type: 'bot', 
+            text: "Error creating resume: " + (error.response?.data?.message || "Please try again.") 
+          }]);
+        }
       }
     } catch (error) {
       console.error('Error:', error);

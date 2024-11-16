@@ -1,10 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import AuthForm from './components/AuthForm';
-import TemplateSelector from './components/TemplateSelector';
 import ResumeBuilder from './components/ResumeBuilder';
 import HistoryPage from './pages/HistoryPage';
 import Login from './components/Login';
+import TemplateSelection from './components/TemplateSelection';
+import CoverLetterBuilder from './components/CoverLetterBuilder';
+import ResumeView from './components/ResumeView';
+
+// Define Home component separately
+const Home = () => {
+  return (
+    <div className="text-center">
+      <h1 className="text-4xl font-bold mb-4">Welcome to InstaResume</h1>
+      <p className="text-lg mb-8">
+        Create your perfect resume and cover letter in minutes.
+      </p>
+      <Link
+        to="/templates"
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        Get Started
+      </Link>
+    </div>
+  );
+};
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -34,11 +54,6 @@ const App = () => {
                   <li>
                     <Link to="/templates" className="hover:text-blue-500">
                       Templates
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/builder" className="hover:text-blue-500">
-                      Builder
                     </Link>
                   </li>
                   <li>
@@ -78,39 +93,35 @@ const App = () => {
 
         <main className="container mx-auto py-8 px-4">
           <Routes>
+            <Route path="/" element={<Home />} />
             <Route 
               path="/login" 
-              element={
-                !isAuthenticated ? (
-                  <Login setIsAuthenticated={setIsAuthenticated} />
-                ) : (
-                  <Navigate to="/templates" />
-                )
-              } 
+              element={!isAuthenticated ? <Login setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/templates" />} 
             />
             <Route 
               path="/signup" 
-              element={
-                !isAuthenticated ? (
-                  <AuthForm setIsAuthenticated={setIsAuthenticated} />
-                ) : (
-                  <Navigate to="/templates" />
-                )
-              } 
+              element={!isAuthenticated ? <AuthForm setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/templates" />} 
             />
             <Route
               path="/templates"
-              element={isAuthenticated ? <TemplateSelector /> : <Navigate to="/login" />}
+              element={isAuthenticated ? <TemplateSelection /> : <Navigate to="/login" />}
             />
             <Route
-              path="/builder"
+              path="/builder/:templateId"
               element={isAuthenticated ? <ResumeBuilder /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/cover-letter-builder/:templateId"
+              element={isAuthenticated ? <CoverLetterBuilder /> : <Navigate to="/login" />}
             />
             <Route
               path="/history"
               element={isAuthenticated ? <HistoryPage /> : <Navigate to="/login" />}
             />
-            <Route path="/" element={<Home />} />
+            <Route
+              path="/resume/:id"
+              element={isAuthenticated ? <ResumeView /> : <Navigate to="/login" />}
+            />
           </Routes>
         </main>
 
@@ -123,20 +134,5 @@ const App = () => {
     </Router>
   );
 };
-
-const Home = () => (
-  <div className="text-center">
-    <h1 className="text-4xl font-bold mb-4">Welcome to InstaResume</h1>
-    <p className="text-lg mb-8">
-      Create your perfect resume and cover letter in minutes.
-    </p>
-    <Link
-      to="/templates"
-      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-    >
-      Get Started
-    </Link>
-  </div>
-);
 
 export default App;

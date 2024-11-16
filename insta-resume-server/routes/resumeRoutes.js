@@ -6,7 +6,8 @@ const {
   getResumes,
   getResumeById,
   updateResume,
-  deleteResume
+  deleteResume,
+  downloadResume
 } = require('../controllers/resumeController');
 
 router.use(protect); // Protect all resume routes
@@ -21,5 +22,7 @@ router.route('/:id')
   .get(getResumeById)
   .put(updateResume)
   .delete(deleteResume);
+
+router.get('/:id/download', protect, downloadResume);
 
 module.exports = router;
