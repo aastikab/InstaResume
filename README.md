@@ -13,7 +13,6 @@ Secure data handling and processing
 Frontend: React.js
 Backend: Node.js
 AI Integration: OpenAI GPT API
-Document Generation: Puppeteer
 Natural Language Processing: Custom NLP implementations
 
 🚀 Getting Started
