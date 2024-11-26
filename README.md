@@ -35,11 +35,9 @@ This platform aims to empower job seekers by delivering high-quality, profession
 1. **Chatbot Development:**  
    - Use **Node.js** for backend development.
    - Integrate **OpenAI’s GPT API** for NLP capabilities.
-2. **Document Generation:**  
-   - Use libraries such as **Puppeteer** for generating formatted resumes and cover letters.
-3. **Front-End Development:**  
+2. **Front-End Development:**  
    - Build an engaging user interface with **ReactJS**.
-4. **Data Handling:**  
+3. **Data Handling:**  
    - Implement data validation techniques in **Node.js** to ensure accuracy and relevance of inputs and outputs.
 
 ---
@@ -65,7 +63,7 @@ This platform aims to empower job seekers by delivering high-quality, profession
 
 ## **Tools and Technologies**
 - **Programming Languages:** JavaScript, Node.js
-- **Frameworks:** ReactJS, Puppeteer
+- **Frameworks:** ReactJS
 - **AI Integration:** OpenAI GPT API
 - **Data Validation:** Node.js techniques
 
