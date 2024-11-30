@@ -4,6 +4,7 @@ import axios from 'axios';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { generateDocx } from '../utils/docxGenerator';
+import { generatePDF } from '../utils/pdfGenerator';
 
 const ResumeBuilder = () => {
   const navigate = useNavigate();
@@ -493,23 +494,53 @@ const ResumeBuilder = () => {
         <PreviewSection>
           <PreviewHeader>
             <h2>Live Preview</h2>
-            <DownloadButton
-              onClick={async () => {
-                try {
-                  await generateDocx(formData);
-                } catch (error) {
-                  console.error('Error generating DOCX:', error);
-                }
-              }}
-              as={motion.button}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Download as DOCX
-            </DownloadButton>
+            <DownloadButtons>
+              <DownloadButton
+                onClick={async () => {
+                  try {
+                    // Create a styled container with the resume content
+                    const styledContent = `
+                      <div style="
+                        font-family: Arial, sans-serif;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 40px;
+                        background: white;
+                        color: black;
+                      ">
+                        ${resumePreview}
+                      </div>
+                    `;
+                    await generatePDF(styledContent);
+                  } catch (error) {
+                    console.error('Error generating PDF:', error);
+                  }
+                }}
+                as={motion.button}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Download as PDF
+              </DownloadButton>
+              <DownloadButton
+                onClick={async () => {
+                  try {
+                    await generateDocx(formData);
+                  } catch (error) {
+                    console.error('Error generating DOCX:', error);
+                  }
+                }}
+                as={motion.button}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Download as DOCX
+              </DownloadButton>
+            </DownloadButtons>
           </PreviewHeader>
           <PreviewContainer 
             dangerouslySetInnerHTML={{ __html: resumePreview }}
+            className='preview-content'
           />
         </PreviewSection>
       </SplitLayout>
@@ -560,7 +591,7 @@ const PreviewHeader = styled.div`
   z-index: 10;
 `;
 
-const PreviewContainer = styled.div`
+const PreviewContainer = styled.div.attrs({ className: 'preview-content' })`
   padding: 2rem;
   min-height: 100%;
   background: white;
@@ -699,6 +730,11 @@ const ProgressText = styled.div`
   padding: 1rem;
   color: #6b7280;
   font-size: 0.9rem;
+`;
+
+const DownloadButtons = styled.div`
+  display: flex;
+  gap: 1rem;
 `;
 
 export default ResumeBuilder;
