@@ -162,3 +162,7 @@ process.on('SIGTERM', () => {
 });
 
 startServer();
+
+// Add this after your existing middleware
+const resumeRoutes = require('./routes/resumeRoutes');
+app.use('/', resumeRoutes);

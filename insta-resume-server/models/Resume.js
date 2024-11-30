@@ -6,19 +6,44 @@ const resumeSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  title: {
-    type: String,
-    required: true,
-    trim: true
+  personalInfo: {
+    name: String,
+    title: String,
+    email: String,
+    phone: String,
+    location: String,
+    summary: String,
+    urls: [{
+      type: String,
+      url: String
+    }]
   },
-  content: {
-    type: Object,
-    required: true
+  experience: [{
+    company: String,
+    title: String,
+    location: String,
+    date: String,
+    responsibilities: [String]
+  }],
+  education: {
+    school: String,
+    degree: String,
+    date: String,
+    gpa: String
   },
-  templateId: {
-    type: String,
-    required: true
-  },
+  skills: [String],
+  achievements: [{
+    title: String,
+    description: String
+  }],
+  certifications: [{
+    name: String,
+    description: String
+  }],
+  languages: [{
+    language: String,
+    level: String
+  }],
   createdAt: {
     type: Date,
     default: Date.now
