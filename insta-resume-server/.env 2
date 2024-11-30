@@ -1,4 +1,3 @@
 PORT=8001
 MONGODB_URI=mongodb+srv://your_actual_username:your_actual_password@your_cluster_url/instaresume?retryWrites=true&w=majority
 JWT_SECRET=your_jwt_secret_key_here
-OPENAI_API_KEY=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
