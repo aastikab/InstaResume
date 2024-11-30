@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
-import AuthForm from './components/AuthForm';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import ResumeBuilder from './components/ResumeBuilder';
 import HistoryPage from './pages/HistoryPage';
 import Login from './components/Auth/Login';
@@ -374,7 +373,7 @@ const App = () => {
                 isAuthenticated ? (
                   <Navigate to="/templates" />
                 ) : (
-                  <Navigate to="/login" />
+                  <Home />
                 )
               } 
             />

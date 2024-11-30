@@ -1,103 +1,215 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
 
 const HistoryPage = () => {
-  const [resumes, setResumes] = useState([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchResumes = async () => {
-      try {
-        const response = await api.get('/resumes');
-        setResumes(response.data);
-      } catch (error) {
-        console.error('Error fetching resumes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResumes();
-  }, []);
-
-  if (loading) return <div className="text-center mt-8">Loading...</div>;
-
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Resume History</h1>
-      {resumes.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">No resumes found</p>
-          <button
+    <PageContainer>
+      <NavBar>
+        <LogoLink to="/">
+          <Logo>InstaResume</Logo>
+        </LogoLink>
+        <NavLinks>
+          <NavLink to="/templates">Templates</NavLink>
+          <NavLink to="/history">History</NavLink>
+          <LogoutButton onClick={() => {
+            localStorage.removeItem('token');
+            navigate('/login');
+          }}>
+            Logout
+          </LogoutButton>
+        </NavLinks>
+      </NavBar>
+
+      <ContentSection>
+        <HeaderSection>
+          <BackButton onClick={() => navigate('/')}>
+            ← Back to Home
+          </BackButton>
+          <Title>Resume History</Title>
+          <CreateNewButton
+            as={motion.button}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/templates')}
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Create New Resume
-          </button>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {resumes.map((resume) => (
-            <div
-              key={resume._id}
-              className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold">
-                    {resume.personalInfo.name}'s Resume
-                  </h2>
-                  <p className="text-gray-600">
-                    Created: {new Date(resume.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => navigate(`/resume/${resume._id}`)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                  >
-                    View
-                  </button>
-                  <button
-                    onClick={() => {
-                      const token = localStorage.getItem('token');
-                      const downloadUrl = `${api.defaults.baseURL}/resumes/${resume._id}/download`;
-                      
-                      fetch(downloadUrl, {
-                        headers: {
-                          'Authorization': `Bearer ${token}`
-                        }
-                      })
-                      .then(response => response.blob())
-                      .then(blob => {
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.setAttribute('download', resume.fileName || 'resume.docx');
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                      })
-                      .catch(error => {
-                        console.error('Download error:', error);
-                        alert('Error downloading resume. Please try again.');
-                      });
-                    }}
-                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                  >
-                    Download
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+          </CreateNewButton>
+        </HeaderSection>
+
+        {/* If no resumes exist */}
+        <EmptyState>
+          <EmptyIcon>📄</EmptyIcon>
+          <EmptyText>No resumes found</EmptyText>
+          <EmptyDescription>
+            Start creating your professional resume today!
+          </EmptyDescription>
+          <CreateNewButton
+            as={motion.button}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/templates')}
+          >
+            Create New Resume
+          </CreateNewButton>
+        </EmptyState>
+
+        {/* When resumes exist, this section will be populated */}
+        <ResumeGrid>
+          {/* Resume cards will be mapped here */}
+        </ResumeGrid>
+      </ContentSection>
+    </PageContainer>
   );
 };
+
+const PageContainer = styled.div`
+  min-height: 100vh;
+  background: #f8fafc;
+`;
+
+const NavBar = styled.nav`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+`;
+
+const LogoLink = styled(Link)`
+  text-decoration: none;
+`;
+
+const Logo = styled.h1`
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const NavLinks = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+`;
+
+const NavLink = styled(Link)`
+  color: #4a5568;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+  }
+`;
+
+const LogoutButton = styled.button`
+  color: #4a5568;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+  }
+`;
+
+const ContentSection = styled.div`
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+`;
+
+const HeaderSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+`;
+
+const BackButton = styled.button`
+  color: #6366f1;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.1);
+  }
+`;
+
+const Title = styled.h1`
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+`;
+
+const CreateNewButton = styled.button`
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin-top: 2rem;
+`;
+
+const EmptyIcon = styled.div`
+  font-size: 4rem;
+  margin-bottom: 1rem;
+`;
+
+const EmptyText = styled.h2`
+  font-size: 1.5rem;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+`;
+
+const EmptyDescription = styled.p`
+  color: #718096;
+  margin-bottom: 2rem;
+`;
+
+const ResumeGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+`;
 
 export default HistoryPage; 

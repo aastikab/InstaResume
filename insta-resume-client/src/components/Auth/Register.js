@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 // Import all styled components from Login
 import {
@@ -38,7 +39,7 @@ import {
   SignUpLink
 } from './Login'; // Create this export in Login.js
 
-const Register = () => {
+const Register = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -46,10 +47,33 @@ const Register = () => {
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add your registration logic here
+    setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost:8002/api/auth/register', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        setIsAuthenticated(true);
+        navigate('/templates');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError(error.response?.data?.message || 'Registration failed');
+    }
   };
 
   return (
@@ -60,9 +84,9 @@ const Register = () => {
         </LogoLink>
         <NavLinks>
           <NavLink to="/templates">Templates</NavLink>
-          <NavLink to="/examples">Examples</NavLink>
+          <NavLink to="/history">History</NavLink>
           <NavLink to="/login">Login</NavLink>
-          <PrimaryButton to="/register">Sign Up</PrimaryButton>
+          <PrimaryButton to="/signup">Sign Up</PrimaryButton>
         </NavLinks>
       </NavBar>
 

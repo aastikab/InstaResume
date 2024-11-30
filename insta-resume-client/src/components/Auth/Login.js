@@ -23,18 +23,26 @@ const Login = ({ setIsAuthenticated }) => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8001/api/auth/login', formData);
+      console.log('Attempting login with:', formData);
+
+      const response = await axios.post('http://localhost:8002/api/auth/login', {
+        email: formData.email,
+        password: formData.password
+      });
+      
+      console.log('Login response:', response.data);
       
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         setIsAuthenticated(true);
         navigate('/templates');
-      } else {
-        setError('Login failed. Please check your credentials.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
-      console.error('Login error:', err);
+      console.error('Login error:', err.response?.data || err);
+      setError(
+        err.response?.data?.message || 
+        'Login failed. Please check your credentials and try again.'
+      );
     } finally {
       setLoading(false);
     }

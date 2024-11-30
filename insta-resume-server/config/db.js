@@ -5,7 +5,7 @@ mongoose.set('strictQuery', true);
 
 const connectDB = async () => {
   try {
-    await mongoose.connect("mongodb+srv://aastikabanstola:bMzx9uGngUzxCVDL@cluster0.o6kaw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster00", {
+    await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });

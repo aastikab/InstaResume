@@ -4,6 +4,32 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { generateResume } from '../utils/documentGenerator';
+
+const PreviewOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(79, 70, 229, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+`;
+
+const TemplatePreview = styled.div`
+  position: relative;
+  padding-top: 141.4%; // A4 aspect ratio
+  background: #f8fafc;
+  overflow: hidden;
+
+  &:hover ${PreviewOverlay} {
+    opacity: 1;
+  }
+`;
 
 const TemplateSelection = ({ isAuthenticated, setIsAuthenticated }) => {
   const navigate = useNavigate();
@@ -48,6 +74,71 @@ const TemplateSelection = ({ isAuthenticated, setIsAuthenticated }) => {
     navigate('/login');
   };
 
+  const HeroSection = () => {
+    return (
+      <HeroContent
+        as={motion.div}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <MainTitle>Create Your Professional Resume</MainTitle>
+        <Subtitle>
+          Build a stunning resume in minutes with our AI-powered platform
+        </Subtitle>
+        <HeroButtons>
+          <GetStartedButton
+            as={motion.button}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/builder/1')}
+          >
+            Create Resume Now
+          </GetStartedButton>
+          <WatchDemoButton
+            as={motion.button}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Watch Demo ▶
+          </WatchDemoButton>
+        </HeroButtons>
+      </HeroContent>
+    );
+  };
+
+  const handleCreateResume = async () => {
+    // Example data - replace with actual form data
+    const resumeData = {
+      name: "John Doe",
+      title: "Software Developer",
+      email: "john@example.com",
+      phone: "+1 234 567 890",
+      summary: "Experienced software developer with expertise in React and Node.js",
+      experience: [
+        {
+          title: "Senior Developer",
+          company: "Tech Corp",
+          date: "2020-Present",
+        }
+      ],
+      education: [
+        {
+          degree: "Bachelor of Science in Computer Science",
+          school: "University of Technology",
+          date: "2016-2020",
+        }
+      ],
+      skills: ["React", "Node.js", "JavaScript", "Python"]
+    };
+
+    try {
+      await generateResume(resumeData);
+    } catch (error) {
+      console.error('Error generating resume:', error);
+    }
+  };
+
   return (
     <PageContainer>
       <NavBar>
@@ -83,13 +174,15 @@ const TemplateSelection = ({ isAuthenticated, setIsAuthenticated }) => {
           </Subtitle>
           <HeroButtons>
             <GetStartedButton
+              as={motion.button}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/templates')}
+              onClick={handleCreateResume}
             >
               Create Resume Now
             </GetStartedButton>
             <WatchDemoButton
+              as={motion.button}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -108,7 +201,7 @@ const TemplateSelection = ({ isAuthenticated, setIsAuthenticated }) => {
       </HeroSection>
 
       <ContentSection>
-        <SectionTitle data-aos="fade-up">Choose Your Template</SectionTitle>
+        <SectionTitle data-aos="fade-up">Professional Resume Templates</SectionTitle>
         <TemplateGrid>
           {templates.map((template, index) => (
             <TemplateCard
@@ -122,24 +215,31 @@ const TemplateSelection = ({ isAuthenticated, setIsAuthenticated }) => {
                 transform: 'scale(1.02)'
               }}
             >
-              <TemplatePreview style={{ background: template.color }}>
+              <TemplatePreview>
                 <PreviewImage src={template.image} alt={template.name} />
-                <PreviewOverlay />
+                <PreviewOverlay>
+                  <UseTemplateButton
+                    as={motion.button}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => 
+                      template.type === 'resume' 
+                        ? navigate(`/builder/${template.id}`)
+                        : navigate(`/cover-letter-builder/${template.id}`)
+                    }
+                  >
+                    Use This Template
+                  </UseTemplateButton>
+                </PreviewOverlay>
               </TemplatePreview>
               <CardContent>
                 <TemplateName>{template.name}</TemplateName>
                 <TemplateDescription>{template.description}</TemplateDescription>
-                <UseTemplateButton
-                  onClick={() => 
-                    template.type === 'resume' 
-                      ? navigate(`/builder/${template.id}`)
-                      : navigate(`/cover-letter-builder/${template.id}`)
-                  }
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Use This Template
-                </UseTemplateButton>
+                <TemplateFeatures>
+                  <FeatureTag>ATS-Friendly</FeatureTag>
+                  <FeatureTag>Customizable</FeatureTag>
+                  {template.type === 'resume' && <FeatureTag>Professional</FeatureTag>}
+                </TemplateFeatures>
               </CardContent>
             </TemplateCard>
           ))}
@@ -238,31 +338,23 @@ const Subtitle = styled.p`
 
 const ContentSection = styled.div`
   max-width: 1200px;
-  margin: -60px auto 0;
-  padding: 0 20px;
-  position: relative;
+  margin: 2rem auto;
+  padding: 0 2rem;
 `;
 
 const TemplateGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-  padding: 20px 0;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
 `;
 
 const TemplateCard = styled.div`
   background: white;
-  border-radius: 20px;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-`;
-
-const TemplatePreview = styled.div`
-  position: relative;
-  padding-top: 141%; // Aspect ratio 1:1.41 (A4)
-  background: white;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.1);
 `;
 
 const PreviewImage = styled.img`
@@ -271,50 +363,58 @@ const PreviewImage = styled.img`
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   transition: transform 0.3s ease;
-  padding: 10px;
-`;
-
-const PreviewOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 100%);
-  pointer-events: none;
 `;
 
 const CardContent = styled.div`
-  padding: 20px;
-  text-align: center;
+  padding: 1.5rem;
 `;
 
 const TemplateName = styled.h3`
-  font-size: 1.5rem;
-  margin: 0 0 10px;
+  font-size: 1.25rem;
+  font-weight: 600;
   color: #1a1a1a;
+  margin-bottom: 0.5rem;
 `;
 
 const TemplateDescription = styled.p`
   color: #666;
-  margin-bottom: 20px;
+  font-size: 0.9rem;
   line-height: 1.5;
+  margin-bottom: 1rem;
+`;
+
+const TemplateFeatures = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+`;
+
+const FeatureTag = styled.span`
+  background: #f3f4f6;
+  color: #4f46e5;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
 `;
 
 const UseTemplateButton = styled(motion.button)`
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  color: white;
+  background: white;
+  color: #4f46e5;
   border: none;
-  padding: 12px 24px;
+  padding: 0.75rem 1.5rem;
   border-radius: 30px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   &:hover {
-    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    background: #f8fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 `;
 
@@ -484,13 +584,11 @@ const ScrollIndicator = styled.div`
 `;
 
 const SectionTitle = styled.h2`
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
   text-align: center;
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 3rem;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin-bottom: 2rem;
 `;
 
 const FeaturesSection = styled.section`

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import api from '../services/api';
 import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
 
 const ResumeBuilder = () => {
   const navigate = useNavigate();
@@ -31,188 +33,139 @@ const ResumeBuilder = () => {
   function getWelcomeMessage(templateId) {
     switch(templateId) {
       case '1':
-        return "Hi! Let's create a professional resume that highlights your corporate experience. What's your full name?";
+        return "Hi! I'm your resume assistant. Let's create a professional resume together. What's your full name?";
       case '2':
-        return "Welcome! Let's build a creative resume that showcases your unique talents. What's your full name?";
+        return "Welcome! I'll help you build a creative resume. What's your full name?";
       default:
-        return "Hi! I'll help you create your resume. What's your full name?";
+        return "Hello! I'll guide you through creating your resume. What's your full name?";
     }
   }
 
-  const getSteps = () => {
-    const baseSteps = [
-      { field: 'name', question: "What's your full name?" },
-      { field: 'email', question: "What's your email address?" },
-      { field: 'phone', question: "What's your phone number?" },
-      { field: 'address', question: "What's your address?" }
-    ];
-
-    switch(templateId) {
-      case '1': // Professional Template
-        return [
-          ...baseSteps,
-          { field: 'summary', question: "Write a professional summary focusing on your corporate achievements and expertise." },
-          { field: 'experience', question: "Detail your work experience with emphasis on quantifiable achievements and leadership roles." },
-          { field: 'education', question: "List your educational background, including relevant certifications and professional development." },
-          { field: 'skills', question: "List your technical and professional skills (separate with commas)." }
-        ];
-      case '2': // Creative Template
-        return [
-          ...baseSteps,
-          { field: 'summary', question: "Write a creative summary that showcases your unique approach and personality." },
-          { field: 'experience', question: "Share your experience with focus on creative projects and innovative solutions." },
-          { field: 'education', question: "List your education and any creative workshops or specialized training." },
-          { field: 'skills', question: "List your creative and technical skills (separate with commas)." }
-        ];
-      default:
-        return baseSteps;
-    }
-  };
-
-  const steps = getSteps();
-
-  const handleSubmit = async (e) => {
+  const handleInputSubmit = async (e) => {
     e.preventDefault();
-    if (loading) return;
+    if (!input.trim()) return;
 
-    const userMessage = { type: 'user', text: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    // Add user message
+    setMessages(prev => [...prev, { type: 'user', text: input }]);
     setLoading(true);
 
-    try {
-      const step = steps[currentStep];
-      let updatedFormData = { ...formData };
+    // Process input based on current step
+    const steps = [
+      { field: 'name', question: "Great! What's your email address?" },
+      { field: 'email', question: "Perfect! What's your phone number?" },
+      { field: 'phone', question: "What's your current location (city, state)?" },
+      { field: 'address', question: "Now, write a brief professional summary about yourself." },
+      { field: 'summary', question: "Let's add your work experience. What was your most recent job title?" },
+      { field: 'experience', question: "What's your highest level of education?" },
+      { field: 'education', question: "Finally, list your key skills (separate with commas)." },
+      { field: 'skills', question: "Great! I'll generate your resume now." }
+    ];
 
-      if (currentStep < 5) {
-        updatedFormData.personalInfo[step.field] = input;
-      } else if (currentStep === 5) {
-        updatedFormData.experience.push(input);
-      } else if (currentStep === 6) {
-        updatedFormData.education.push(input);
-      } else if (currentStep === 7) {
-        updatedFormData.skills = input.split(',').map(skill => skill.trim());
+    // Update formData based on current step
+    const currentField = steps[currentStep].field;
+    const updatedFormData = { ...formData };
+    
+    if (currentStep < steps.length - 1) {
+      // Add bot response after a short delay
+      setTimeout(() => {
+        setMessages(prev => [...prev, { type: 'bot', text: steps[currentStep + 1].question }]);
+        setLoading(false);
+      }, 1000);
+
+      // Update form data
+      if (currentField === 'experience' || currentField === 'education') {
+        updatedFormData[currentField] = [...formData[currentField], input];
+      } else if (currentField === 'skills') {
+        updatedFormData[currentField] = input.split(',').map(skill => skill.trim());
+      } else {
+        updatedFormData.personalInfo[currentField] = input;
       }
 
       setFormData(updatedFormData);
-
-      if (currentStep < steps.length - 1) {
-        const nextQuestion = { type: 'bot', text: steps[currentStep + 1].question };
-        setMessages(prev => [...prev, nextQuestion]);
-        setCurrentStep(prev => prev + 1);
-      } else {
-        try {
-          const response = await api.post('/resumes', {
-            ...updatedFormData,
-            templateId
-          }, {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      // Final step - generate resume
+      try {
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_URL}/api/resumes`,
+          updatedFormData,
+          {
             headers: {
-              'Content-Type': 'application/json',
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
-          });
-          
-          if (response.data.resumeId) {
-            setMessages(prev => [...prev, { 
-              type: 'bot', 
-              text: "Great! I've created your resume using the selected template. Redirecting to view it..." 
-            }]);
-            setTimeout(() => navigate(`/resume/${response.data.resumeId}`), 2000);
           }
-        } catch (error) {
-          console.error('API Error:', error.response?.data || error.message);
-          setMessages(prev => [...prev, { 
-            type: 'bot', 
-            text: "Error creating resume: " + (error.response?.data?.message || "Please try again.") 
-          }]);
+        );
+
+        if (response.data.success) {
+          navigate('/history');
         }
+      } catch (error) {
+        console.error('Error creating resume:', error);
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          text: "Sorry, there was an error creating your resume. Please try again." 
+        }]);
       }
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages(prev => [...prev, { 
-        type: 'bot', 
-        text: "Sorry, there was an error. Please try again." 
-      }]);
-    } finally {
-      setLoading(false);
     }
+
+    setInput('');
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-6">Resume Builder Assistant</h2>
+    <Container>
+      <BuilderCard>
+        <Header>Resume Builder Assistant</Header>
         
-        {/* Chat Messages */}
-        <div className="h-96 overflow-y-auto mb-6 p-4 bg-gray-50 rounded-lg">
+        <ChatContainer>
           {messages.map((message, index) => (
-            <div
+            <MessageBubble
               key={index}
-              className={`mb-4 ${
-                message.type === 'bot' 
-                  ? 'flex justify-start' 
-                  : 'flex justify-end'
-              }`}
+              as={motion.div}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              type={message.type}
             >
-              <div
-                className={`max-w-[80%] p-3 rounded-lg ${
-                  message.type === 'bot'
-                    ? 'bg-blue-100 text-blue-900'
-                    : 'bg-green-100 text-green-900'
-                }`}
-              >
-                {message.text}
-              </div>
-            </div>
+              {message.text}
+            </MessageBubble>
           ))}
-        </div>
+          {loading && <TypingIndicator>Assistant is typing...</TypingIndicator>}
+        </ChatContainer>
 
-        {/* Input Form */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
+        <InputForm onSubmit={handleInputSubmit}>
+          <Input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Type your answer here..."
             disabled={loading}
           />
-          <button
+          <SubmitButton
             type="submit"
             disabled={loading || !input.trim()}
-            className={`px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 
-              transition-colors duration-200 ${
-                loading || !input.trim() 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : ''
-              }`}
+            as={motion.button}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            {loading ? (
-              <div className="flex items-center">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                Processing...
-              </div>
-            ) : (
-              'Send'
-            )}
-          </button>
-        </form>
+            Send
+          </SubmitButton>
+        </InputForm>
 
-        {/* Progress Indicator */}
-        <div className="mt-4">
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-blue-500 h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-            ></div>
-          </div>
-          <p className="text-sm text-gray-600 mt-2">
-            Step {currentStep + 1} of {steps.length}
-          </p>
-        </div>
-      </div>
-    </div>
+        <ProgressBar>
+          <Progress width={(currentStep / 7) * 100} />
+        </ProgressBar>
+        <ProgressText>Step {currentStep + 1} of 8</ProgressText>
+      </BuilderCard>
+    </Container>
   );
 };
+
+// Styled components
+const Container = styled.div`
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f6f7ff 0%, #ffffff 100%);
+`;
+
+// ... Add all the styled components here ...
 
 export default ResumeBuilder;
