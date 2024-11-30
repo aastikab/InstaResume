@@ -1,34 +1,19 @@
 const mongoose = require('mongoose');
 
-// Set strictQuery to false to prepare for Mongoose 7
-mongoose.set('strictQuery', false);
+// Set strictQuery option
+mongoose.set('strictQuery', true);
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    await mongoose.connect("mongodb+srv://aastikabanstola:bMzx9uGngUzxCVDL@cluster0.o6kaw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster00", {
       useNewUrlParser: true,
-      useUnifiedTopology: true,
+      useUnifiedTopology: true
     });
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error);
     process.exit(1);
   }
 };
-
-// Handle connection errors after initial connection
-mongoose.connection.on('error', err => {
-  console.error('MongoDB error after initial connection:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected');
-});
-
-process.on('SIGINT', async () => {
-  await mongoose.connection.close();
-  process.exit(0);
-});
 
 module.exports = connectDB;
