@@ -5,6 +5,9 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { generateDocx } from '../utils/docxGenerator';
 import { generatePDF } from '../utils/pdfGenerator';
+import { professionalQuestions, professionalFormat } from '../templates/ProfessionalResume';
+import { modernQuestions, modernFormat } from '../templates/ModernResume';
+import { coverLetterQuestions, coverLetterFormat } from '../templates/CoverLetter';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -272,159 +275,47 @@ const ResumeBuilder = () => {
   ]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
+  const [steps, setSteps] = useState([]);
 
   // Update preview whenever formData changes
   useEffect(() => {
     updateResumePreview();
   }, [formData]);
 
+  useEffect(() => {
+    // Set questions based on template
+    switch(templateId) {
+      case '1':
+        setSteps(professionalQuestions);
+        break;
+      case '2':
+        setSteps(modernQuestions);
+        break;
+      case '3':
+        setSteps(coverLetterQuestions);
+        break;
+      default:
+        setSteps(professionalQuestions);
+    }
+  }, [templateId]);
+
   const updateResumePreview = () => {
-    const preview = `
-      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-          <div style="text-align: left;">
-            ${formData.personalInfo.phone ? `<div>${formData.personalInfo.phone}</div>` : ''}<br/>
-            ${formData.personalInfo.email ? `<div>${formData.personalInfo.email}</div>` : ''}
-          </div>
-          <div style="text-align: center; flex-grow: 1;">
-            <h1 style="margin: 0; font-size: 24px; text-transform: uppercase; font-weight: bold;">
-              ${formData.personalInfo.name || 'Your Name'}
-            </h1>
-            <div style="color: #666; margin-top: 5px;">
-              ${formData.personalInfo.title || 'Professional Title'} | ${formData.personalInfo.location || 'Location'}
-            </div>
-          </div>
-          <div style="text-align: right;">
-            ${formData.personalInfo.urls.map(url => 
-              `${url.type}: ${url.url}<br/>`
-            ).join('')}
-          </div>
-        </div>
+    let preview;
+    
+    switch(templateId) {
+      case '1':
+        preview = professionalFormat(formData);
+        break;
+      case '2':
+        preview = modernFormat(formData);
+        break;
+      case '3':
+        preview = coverLetterFormat(formData);
+        break;
+      default:
+        preview = professionalFormat(formData);
+    }
 
-        ${formData.personalInfo.summary ? `
-          <!-- Summary Section -->
-          <div style="margin-bottom: 20px;">
-            <h2 style="text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-              Summary
-            </h2>
-            <p style="margin: 0; color: #333;">
-              ${formData.personalInfo.summary}
-            </p>
-          </div>
-        ` : ''}
-
-        ${formData.experience.length > 0 ? `
-          <!-- Experience Section -->
-          <div style="margin-bottom: 20px;">
-            <h2 style="text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-              Relevant Experience
-            </h2>
-            ${formData.experience.map(exp => `
-              <div style="margin-bottom: 15px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                  <div>
-                    <div style="font-weight: bold;">${exp.company || 'Company Name'}</div>
-                    <div style="font-style: italic;">${exp.title || 'Position Title'}</div>
-                  </div>
-                  <div style="text-align: right;">
-                    <div>${exp.location || 'Location'}</div>
-                    <div>${exp.date || 'Date Range'}</div>
-                  </div>
-                </div>
-                <ul style="margin: 5px 0; padding-left: 20px;">
-                  ${exp.responsibilities ? exp.responsibilities.map(resp => 
-                    `<li>${resp}</li>`
-                  ).join('') : ''}
-                </ul>
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
-
-        ${formData.education.school ? `
-          <!-- Education Section -->
-          <div style="margin-bottom: 20px;">
-            <h2 style="text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-              Education
-            </h2>
-            <div style="display: flex; justify-content: space-between;">
-              <div>
-                <div style="font-weight: bold;">${formData.education.school}</div>
-                <div>${formData.education.degree}</div>
-                ${formData.education.gpa ? `<div>GPA: ${formData.education.gpa}</div>` : ''}
-              </div>
-              <div style="text-align: right;">
-                ${formData.education.date}
-              </div>
-            </div>
-          </div>
-        ` : ''}
-
-        ${formData.achievements.length > 0 ? `
-          <!-- Achievements Section -->
-          <div style="margin-bottom: 20px;">
-            <h2 style="text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-              Achievements
-            </h2>
-            <div style="display: flex; justify-content: space-between; gap: 20px;">
-              ${formData.achievements.map(achievement => `
-                <div style="flex: 1; text-align: center;">
-                  <div style="font-weight: bold;">✦ ${achievement.title || ''}</div>
-                  <div style="color: #666; font-size: 0.9em;">${achievement.description || ''}</div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        ${formData.skills.length > 0 ? `
-          <!-- Skills Section -->
-          <div style="margin-bottom: 20px;">
-            <h2 style="text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-              Skills
-            </h2>
-            <p style="margin: 0;">
-              ${formData.skills.join(' • ') || 'List your skills here...'}
-            </p>
-          </div>
-        ` : ''}
-
-        ${formData.certifications.length > 0 ? `
-          <!-- Certifications Section -->
-          <div style="margin-bottom: 20px;">
-            <h2 style="text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-              Certification
-            </h2>
-            ${formData.certifications.map(cert => `
-              <div style="margin-bottom: 5px;">
-                <strong>${cert.name}</strong> — ${cert.description}
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
-
-        ${formData.languages && formData.languages.length > 0 ? `
-          <!-- Languages Section -->
-          <div style="margin-bottom: 20px;">
-            <h2 style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
-              Languages
-            </h2>
-            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-              ${formData.languages.map(lang => 
-                lang && lang.language ? `
-                <div style="min-width: 150px; margin-bottom: 10px;">
-            <span style="font-weight: bold;">${lang.language}</span>
-            <span style="color: #666666; margin-left: 8px;">
-              ${lang.level || ''}
-            </span>
-          </div>
-        ` : ''
-      ).join('')}
-    </div>
-  </div>
-` : ''}
-      </div>
-    `;
     setResumePreview(preview);
   };
 
@@ -463,56 +354,6 @@ const ResumeBuilder = () => {
         return "Hello! I'll guide you through creating your resume. What's your full name?";
     }
   }
-
-  const steps = [
-    // Personal Information (Required)
-    { field: 'name', question: "What's your full name?" },
-    { field: 'title', question: "What's your professional title? (e.g., Product Marketing Manager)" },
-    { field: 'email', question: "What's your email address?" },
-    { field: 'phone', question: "What's your phone number?" },
-    { field: 'location', question: "Where are you located? (e.g., Virginia Beach, VA)" },
-    
-    // URLs
-    { field: 'add_urls', question: "Would you like to add any professional URLs (LinkedIn, GitHub, Portfolio)? (yes/no)" },
-    { field: 'url1', question: "Please provide your first professional URL" },
-    { field: 'url1_type', question: "What type of URL is this? (e.g., LinkedIn, GitHub, Portfolio)" },
-    { field: 'url2', question: "Would you like to add another URL? If yes, enter the URL, if no, type 'no'" },
-    { field: 'url2_type', question: "What type of URL is this?" },
-
-    // Summary
-    { field: 'add_summary', question: "Would you like to add a professional summary? (yes/no)" },
-    { field: 'summary', question: "Please provide a brief professional summary highlighting your key achievements." },
-
-    // Experience
-    { field: 'add_experience', question: "Would you like to add work experience? (yes/no)" },
-    { field: 'experience_company', question: "What's the company name?" },
-    { field: 'experience_title', question: "What was your position title?" },
-    { field: 'experience_location', question: "Where was this position located?" },
-    { field: 'experience_date', question: "When did you work here? (e.g., 01/2022 - Present)" },
-    { field: 'experience_responsibilities', question: "List 3-4 key achievements or responsibilities (separate with semicolons)" },
-    { field: 'add_more_experience', question: "Would you like to add another position? (yes/no)" },
-
-    // Education
-    { field: 'add_education', question: "Would you like to add education details? (yes/no)" },
-    { field: 'education_school', question: "What's your university name?" },
-    { field: 'education_degree', question: "What degree did you receive?" },
-    { field: 'education_date', question: "What are your attendance dates?" },
-    { field: 'education_gpa', question: "What was your GPA? (Optional)" },
-
-    // Skills
-    { field: 'add_skills', question: "Would you like to add skills? (yes/no)" },
-    { field: 'skills', question: "List your key skills, separated by commas" },
-
-    // Certifications
-    { field: 'add_certifications', question: "Would you like to add certifications? (yes/no)" },
-    { field: 'certification_1', question: "What's your first certification?" },
-    { field: 'certification_1_description', question: "Briefly describe this certification" },
-    { field: 'add_more_certification', question: "Would you like to add another certification? (yes/no)" },
-
-    // Languages
-    { field: 'add_languages', question: "Would you like to add language proficiencies? (yes/no)" },
-    { field: 'languages', question: "List your languages and proficiency levels (e.g., English - Native, Spanish - Advanced). Separate with semicolons." }
-  ];
 
   const handleInputSubmit = async (e) => {
     e.preventDefault();
@@ -703,7 +544,36 @@ const ResumeBuilder = () => {
           setLoading(false);
           return;
         }
+      } else if (templateId === '3' && currentField === 'closing') {
+        // For cover letter, when we reach the closing message
+        updatedFormData[currentField] = 'I would welcome the opportunity to discuss how my background and skills would benefit your organization. Thank you for considering my application.';
+        
+        // Update form data
+        setFormData(updatedFormData);
+        
+        // Show completion message without waiting for input
+        setMessages(prev => [
+          ...prev,
+          { type: 'bot', text: "Great your cover letter is ready to download" }
+        ]);
+        
+        // Clear input and stop loading
+        setInput('');
+        setLoading(false);
+        
+        // Update preview one final time
+        updateResumePreview();
+        
+        // Set to last step to prevent further questions
+        setCurrentStep(steps.length - 1);
+        
+        // Important: Return immediately to prevent further processing
+        return;
+      } else if (templateId === '3') {
+        // Handle other cover letter fields normally
+        updatedFormData[currentField] = input;
       } else {
+        // Handle other templates as before
         updatedFormData.personalInfo[currentField] = input;
       }
   

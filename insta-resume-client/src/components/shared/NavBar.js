@@ -6,6 +6,14 @@ import { FaFileAlt, FaHistory, FaSignOutAlt } from 'react-icons/fa';
 const NavBar = ({ isAuthenticated }) => {
   const navigate = useNavigate();
 
+  const handleLogoClick = () => {
+    if (isAuthenticated) {
+      navigate('/templates');
+    } else {
+      navigate('/login');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
@@ -13,7 +21,7 @@ const NavBar = ({ isAuthenticated }) => {
 
   return (
     <NavBarContainer>
-      <LogoLink onClick={() => navigate('/')}>
+      <LogoLink onClick={handleLogoClick}>
         <Logo>InstaResume</Logo>
       </LogoLink>
       <NavLinks>
@@ -59,6 +67,15 @@ const NavBarContainer = styled.nav`
 
 const LogoLink = styled.div`
   cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 `;
 
 const Logo = styled.h1`
