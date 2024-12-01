@@ -12,7 +12,6 @@ const resumeSchema = new mongoose.Schema({
     email: String,
     phone: String,
     location: String,
-    summary: String,
     urls: [{
       type: String,
       url: String
