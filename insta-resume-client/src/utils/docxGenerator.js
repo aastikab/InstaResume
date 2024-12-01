@@ -14,13 +14,27 @@ export const generateDocx = async (formData) => {
             new TableRow({
               children: [
                 // Left column (Phone & Email)
+                // new TableCell({
+                //   borders: { all: { style: BorderStyle.NONE } },
+                //   children: [
+                //     new Paragraph({ text: "(Phone)", style: { color: "#666666" } }),
+                //     new Paragraph({ text: formData.personalInfo.phone || '' }),
+                //     new Paragraph({ text: "(Email)", style: { color: "#666666" } }),
+                //     new Paragraph({ text: formData.personalInfo.email || '' })
+                //   ]
+                // }),
+
                 new TableCell({
                   borders: { all: { style: BorderStyle.NONE } },
                   children: [
-                    new Paragraph({ text: "(Phone)", style: { color: "#666666" } }),
-                    new Paragraph({ text: formData.personalInfo.phone || '' }),
-                    new Paragraph({ text: "(Email)", style: { color: "#666666" } }),
-                    new Paragraph({ text: formData.personalInfo.email || '' })
+                    new Paragraph({ 
+                      text: `${formData.personalInfo.phone || 'Phone'}`,
+                      style: { color: "#666666" }
+                    }),
+                    new Paragraph({ 
+                      text: `${formData.personalInfo.email || 'Email'}`,
+                      style: { color: "#666666" }
+                    })
                   ]
                 }),
                 // Center column (Name & Title)

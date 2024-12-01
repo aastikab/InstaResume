@@ -40,7 +40,7 @@ const HistoryPage = () => {
           </CreateNewButton>
         </HeaderSection>
 
-        {/* If no resumes exist */}
+        {/* Empty state */}
         <EmptyState>
           <EmptyIcon>📄</EmptyIcon>
           <EmptyText>No resumes found</EmptyText>
@@ -56,11 +56,6 @@ const HistoryPage = () => {
             Create New Resume
           </CreateNewButton>
         </EmptyState>
-
-        {/* When resumes exist, this section will be populated */}
-        <ResumeGrid>
-          {/* Resume cards will be mapped here */}
-        </ResumeGrid>
       </ContentSection>
     </PageContainer>
   );

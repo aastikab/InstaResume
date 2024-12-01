@@ -265,9 +265,9 @@ const ResumeBuilder = () => {
       description: 'Contemporary design with creative layout'
     },
     {
-      id: 'technical',
-      name: 'Technical',
-      description: 'Focused on technical skills and projects'
+      id: 'Cover-Letter',
+      name: 'Cover-Letter',
+      description: 'Focused on Cover-Letter skills and projects'
     }
   ]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -283,10 +283,8 @@ const ResumeBuilder = () => {
       <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
           <div style="text-align: left;">
-            <div>(Phone)</div>
-            ${formData.personalInfo.phone || ''}<br/>
-            <div>(Email)</div>
-            ${formData.personalInfo.email || ''}
+            ${formData.personalInfo.phone ? `<div>${formData.personalInfo.phone}</div>` : ''}<br/>
+            ${formData.personalInfo.email ? `<div>${formData.personalInfo.email}</div>` : ''}
           </div>
           <div style="text-align: center; flex-grow: 1;">
             <h1 style="margin: 0; font-size: 24px; text-transform: uppercase; font-weight: bold;">
@@ -297,7 +295,6 @@ const ResumeBuilder = () => {
             </div>
           </div>
           <div style="text-align: right;">
-            <div>(URL)</div>
             ${formData.personalInfo.urls.map(url => 
               `${url.type}: ${url.url}<br/>`
             ).join('')}
@@ -406,24 +403,26 @@ const ResumeBuilder = () => {
           </div>
         ` : ''}
 
-        ${formData.languages.length > 0 ? `
+        ${formData.languages && formData.languages.length > 0 ? `
           <!-- Languages Section -->
           <div style="margin-bottom: 20px;">
-            <h2 style="text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
+            <h2 style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px;">
               Languages
             </h2>
-            <div style="display: flex; gap: 30px;">
-              ${formData.languages.map(lang => `
-                <div>
-                  <span>${lang.language}</span>
-                  <span style="margin-left: 10px;">
-                    ${'●'.repeat(lang.level === 'Native' ? 5 : 4)}${lang.level !== 'Native' ? '○' : ''}
-                  </span>
-                </div>
-              `).join('')}
-            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+              ${formData.languages.map(lang => 
+                lang && lang.language ? `
+                <div style="min-width: 150px; margin-bottom: 10px;">
+            <span style="font-weight: bold;">${lang.language}</span>
+            <span style="color: #666666; margin-left: 8px;">
+              ${lang.level || ''}
+            </span>
           </div>
-        ` : ''}
+        ` : ''
+      ).join('')}
+    </div>
+  </div>
+` : ''}
       </div>
     `;
     setResumePreview(preview);
@@ -525,55 +524,77 @@ const ResumeBuilder = () => {
     const currentField = steps[currentStep].field;
     const updatedFormData = { ...formData };
   
-    // Handle "add more" questions
-    if (currentField.startsWith('add_more_')) {
-      const response = input.toLowerCase();
-      if (response === 'no') {
+    // Handle "add_more_experience" question FIRST
+    if (currentField === 'add_more_experience') {
+      if (input.toLowerCase() === 'yes') {
+        // Go back to experience company question
+        const experienceCompanyIndex = steps.findIndex(s => s.field === 'experience_company');
+        setCurrentStep(experienceCompanyIndex);
+        setTimeout(() => {
+          setMessages(prev => [...prev, { type: 'bot', text: steps[experienceCompanyIndex].question }]);
+          setLoading(false);
+        }, 1000);
+        setInput('');
+        return;
+      } else if (input.toLowerCase() === 'no') {
+        // Move to education section
+        const educationIndex = steps.findIndex(s => s.field === 'add_education');
+        setCurrentStep(educationIndex);
+        setTimeout(() => {
+          setMessages(prev => [...prev, { type: 'bot', text: steps[educationIndex].question }]);
+          setLoading(false);
+        }, 1000);
+        setInput('');
+        return;
+      }
+    }
+
+    // THEN handle other "add_" questions
+    if (currentField.startsWith('add_')) {
+      if (input.toLowerCase() === 'no') {
         // Find the next section's "add_" question
         const currentIndex = steps.findIndex(s => s.field === currentField);
         let nextSectionIndex = steps.findIndex((s, index) => 
           index > currentIndex && s.field.startsWith('add_') && !s.field.startsWith('add_more_')
         );
-  
+
+        // Skip the questions for the current section
+        if (currentField === 'add_summary') {
+          // Skip summary question
+          nextSectionIndex = steps.findIndex(s => s.field === 'add_experience');
+        } else if (currentField === 'add_experience') {
+          nextSectionIndex = steps.findIndex(s => s.field === 'add_education');
+        } else if (currentField === 'add_education') {
+          nextSectionIndex = steps.findIndex(s => s.field === 'add_skills');
+        } else if (currentField === 'add_skills') {
+          nextSectionIndex = steps.findIndex(s => s.field === 'add_certifications');
+        } else if (currentField === 'add_certifications') {
+          nextSectionIndex = steps.findIndex(s => s.field === 'add_languages');
+        }
+
         if (nextSectionIndex === -1) {
           nextSectionIndex = steps.length - 1;
         }
-  
+
         setCurrentStep(nextSectionIndex);
         setTimeout(() => {
           setMessages(prev => [...prev, { type: 'bot', text: steps[nextSectionIndex].question }]);
           setLoading(false);
         }, 1000);
-      } else if (response === 'yes') {
-        // Find the first question of the current section
-        let sectionStart;
-        if (currentField === 'add_more_experience') {
-          sectionStart = steps.findIndex(s => s.field === 'experience_company');
-        } else if (currentField === 'add_more_achievements') {
-          sectionStart = steps.findIndex(s => s.field === 'achievement_1_title');
-        } else if (currentField === 'add_more_certification') {
-          sectionStart = steps.findIndex(s => s.field === 'certification_1');
-        }
-  
-        if (sectionStart !== undefined) {
-          setCurrentStep(sectionStart);
-          setTimeout(() => {
-            setMessages(prev => [...prev, { type: 'bot', text: steps[sectionStart].question }]);
-            setLoading(false);
-          }, 1000);
-        }
-      } else {
-        // Invalid response
-        setTimeout(() => {
-          setMessages(prev => [...prev, { type: 'bot', text: "Please answer with 'yes' or 'no'." }]);
-          setLoading(false);
-        }, 1000);
+        setInput('');
+        return;
       }
+      // If yes, continue to the next question normally
+      setCurrentStep(prev => prev + 1);
+      setTimeout(() => {
+        setMessages(prev => [...prev, { type: 'bot', text: steps[currentStep + 1].question }]);
+        setLoading(false);
+      }, 1000);
       setInput('');
       return;
     }
 
-      // Add the URL handling code HERE, before the regular field updates
+    // Add the URL handling code HERE, before the regular field updates
     if (currentField.startsWith('url')) {
       if (currentField === 'url2' && input.toLowerCase() === 'no') {
         // Skip directly to the next section (summary)
@@ -602,9 +623,6 @@ const ResumeBuilder = () => {
       }
     }
 
-
-
-  
     // Handle regular field updates
     if (currentStep < steps.length - 1) {
       // Update form data based on field type
@@ -644,10 +662,47 @@ const ResumeBuilder = () => {
         }
         updatedFormData.certifications[parseInt(index) - 1][type === 'description' ? 'description' : 'name'] = input;
       } else if (currentField === 'languages') {
-        updatedFormData.languages = input.split(';').map(lang => {
-          const [language, level] = lang.split('-').map(s => s.trim());
-          return { language, level };
-        });
+        try {
+          // Parse languages
+          const languageEntries = input.split(';').map(lang => {
+            const [language, level] = lang.split('-').map(s => s.trim());
+            return { language, level };
+          });
+      
+          // Create final form data
+          const finalFormData = {
+            ...updatedFormData,
+            languages: languageEntries
+          };
+      
+          // Update form data immediately
+          setFormData(finalFormData);
+      
+          // Just add the user's final input without any bot response
+          setMessages(prev => [
+            ...prev, 
+            { type: 'user', text: input }
+          ]);
+      
+          // Clear input, stop loading, and update preview
+          setInput('');
+          setLoading(false);
+          updateResumePreview();
+      
+          // Set currentStep to the last step to prevent further questions
+          setCurrentStep(steps.length - 1);
+      
+          // IMPORTANT: Return immediately
+          return;
+        } catch (error) {
+          console.error('Error processing languages:', error);
+          setMessages(prev => [...prev, { 
+            type: 'bot', 
+            text: 'Sorry, there was an error processing your languages. Please try again.' 
+          }]);
+          setLoading(false);
+          return;
+        }
       } else {
         updatedFormData.personalInfo[currentField] = input;
       }
